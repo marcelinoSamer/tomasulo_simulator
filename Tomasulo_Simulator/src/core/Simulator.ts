@@ -408,7 +408,7 @@ export class Simulator {
 
             const offset = (commitInstr as any).offset as number;
             const actualPC = commitValue === 1
-                ? commitInstr.pc + 1 + offset  // Taken
+                ? commitInstr.pc + offset  // Taken
                 : commitInstr.pc + 1;          // Not taken
 
 
