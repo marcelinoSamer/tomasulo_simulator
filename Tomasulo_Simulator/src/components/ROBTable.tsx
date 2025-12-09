@@ -18,7 +18,7 @@ export default function ROBTable({ snapshot }: { snapshot: SimulatorSnapshot }) 
                     <tbody>
                         {snapshot.rob.map((e, i) => (
                             <tr key={i} className="odd:bg-gray-800 even:bg-gray-750 hover:bg-gray-700 transition-colors">
-                                <td className="border border-gray-600 px-3 py-2 text-purple-400 font-mono">{i}</td>
+                                <td className="border border-gray-600 px-3 py-2 text-purple-400 font-mono">{i + 1}</td>
                                 <td className="border border-gray-600 px-3 py-2">{e.busy ? <span className="text-green-400">✔</span> : <span className="text-gray-500">—</span>}</td>
                                 <td className="border border-gray-600 px-3 py-2 font-mono">{e.type}</td>
                                 <td className="border border-gray-600 px-3 py-2 text-blue-400">{e.destReg ?? "-"}</td>

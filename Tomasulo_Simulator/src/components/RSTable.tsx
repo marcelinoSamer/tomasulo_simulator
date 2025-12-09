@@ -21,9 +21,9 @@ export default function RSTable({ snapshot }: { snapshot: SimulatorSnapshot }) {
                                 <td className="border border-gray-600 px-3 py-2">{e.busy ? <span className="text-green-400">✔</span> : <span className="text-gray-500">—</span>}</td>
                                 <td className="border border-gray-600 px-3 py-2 text-yellow-400 font-mono">{e.Vj ?? "-"}</td>
                                 <td className="border border-gray-600 px-3 py-2 text-yellow-400 font-mono">{e.Vk ?? "-"}</td>
-                                <td className="border border-gray-600 px-3 py-2 text-blue-400 font-mono">{e.Qj ?? "-"}</td>
-                                <td className="border border-gray-600 px-3 py-2 text-blue-400 font-mono">{e.Qk ?? "-"}</td>
-                                <td className="border border-gray-600 px-3 py-2 text-blue-400 font-mono">{e.dest ?? "-"}</td>
+                                <td className="border border-gray-600 px-3 py-2 text-blue-400 font-mono">{e.Qj !== null ? e.Qj + 1 : "-"}</td>
+                                <td className="border border-gray-600 px-3 py-2 text-blue-400 font-mono">{e.Qk !== null ? e.Qk + 1 : "-"}</td>
+                                <td className="border border-gray-600 px-3 py-2 text-blue-400 font-mono">{e.dest !== null ? e.dest + 1 : "-"}</td>
                                 <td className="border border-gray-600 px-3 py-2 text-orange-400 font-mono">{e.remaining ?? "-"}</td>
                             </tr>
                         ))}
