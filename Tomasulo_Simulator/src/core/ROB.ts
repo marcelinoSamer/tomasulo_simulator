@@ -1,4 +1,4 @@
-import type { ROBEntry, Instruction, ROBTiming, Opcode } from "./types";
+import type { ROBEntry, Instruction, Opcode } from "./types";
 
 export class ROB {
     entries: ROBEntry[];

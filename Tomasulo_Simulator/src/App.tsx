@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Simulator } from "./core/Simulator";
 import { parseAssembly } from "./core/parseAssembly";
 

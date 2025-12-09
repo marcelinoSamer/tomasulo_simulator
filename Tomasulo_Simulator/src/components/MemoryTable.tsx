@@ -1,4 +1,3 @@
-import React from "react";
 import type { SimulatorSnapshot } from "../core/types";
 
 export default function MemoryTable({ snapshot }: { snapshot: SimulatorSnapshot }) {

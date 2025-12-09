@@ -2,8 +2,6 @@
 
 import type {
     Instruction,
-    RSEntry,
-    ROBEntry,
     SimulatorSnapshot,
     Opcode,
 } from "./types";
@@ -118,7 +116,6 @@ export class Simulator {
 
         switch (type) {
             case "LOAD": {
-                const rd = (instr as any).rd as number;
                 const base = (instr as any).rs as number;
                 const offset = (instr as any).offset as number;
 
