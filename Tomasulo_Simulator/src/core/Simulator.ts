@@ -534,6 +534,11 @@ export class Simulator {
         }
     }
 
+    /** Returns true if all instructions have been committed */
+    isFinished(): boolean {
+        // All instructions issued and ROB is empty (all committed)
+        return this.nextIssueIndex >= this.program.length && this.rob.count === 0;
+    }
 
     stepOneCycle(): void {
         this.issue();
