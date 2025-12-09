@@ -1,0 +1,4 @@
+{
+  "buildCommand": "cd Tomasulo_Simulator && npm install && npm run build",
+  "outputDirectory": "Tomasulo_Simulator/dist"
+}
