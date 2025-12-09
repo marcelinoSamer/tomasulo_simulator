@@ -65,6 +65,7 @@ export interface RSEntry {
     remaining: number;
     execStarted: boolean;
     wrote: boolean;
+    pendingWrite: boolean;
 
     issueCycle: number | null;
     startExecCycle: number | null;

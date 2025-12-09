@@ -16,6 +16,14 @@ export class Memory {
         this.mem.set(addr, value & 0xffff);
     }
 
+    delete(addr: number) {
+        this.mem.delete(addr);
+    }
+
+    clear() {
+        this.mem.clear();
+    }
+
     dumpRelevant(): Record<number, number> {
         const out: Record<number, number> = {};
         for (const [k, v] of this.mem.entries()) out[k] = v;

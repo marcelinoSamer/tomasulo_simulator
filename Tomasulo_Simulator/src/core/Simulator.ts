@@ -75,6 +75,7 @@ export class Simulator {
         const stat = {
             robIdx,
             instr,
+            raw: instr.raw || instr.type,
             issue: this.cycle + 1,
             startExec: null,
             finishExec: null,
@@ -109,10 +110,24 @@ export class Simulator {
         const robEntry = this.rob.get(robIdx);
         robEntry.timings.issue = this.cycle + 1;
 
+        // Reset all RS entry fields before populating
         rsEntry.busy = true;
         rsEntry.instr = instr;
         rsEntry.dest = robIdx;
         rsEntry.issueCycle = this.cycle + 1;
+        rsEntry.Vj = null;
+        rsEntry.Vk = null;
+        rsEntry.Qj = null;
+        rsEntry.Qk = null;
+        rsEntry.address = null;
+        rsEntry.remaining = 0;
+        rsEntry.execStarted = false;
+        rsEntry.wrote = false;
+        rsEntry.pendingWrite = false;
+        rsEntry.startExecCycle = null;
+        rsEntry.endExecCycle = null;
+        rsEntry.writeCycle = null;
+        rsEntry.commitCycle = null;
 
         switch (type) {
             case "LOAD": {
@@ -224,6 +239,13 @@ export class Simulator {
             if (!e.busy) continue;
             if (e.execStarted && e.remaining <= 0) continue;
 
+            // An instruction cannot start execution in the same cycle it was issued
+            // issueCycle is set to this.cycle + 1 during issue(), so if issueCycle > this.cycle,
+            // the instruction was just issued this cycle and must wait until next cycle
+            if (!e.execStarted && e.issueCycle !== null && e.issueCycle > this.cycle) {
+                continue;
+            }
+
             const readyForStart = (() => {
                 switch (e.type) {
                     case "LOAD":
@@ -265,6 +287,13 @@ export class Simulator {
                     e.endExecCycle = this.cycle + 1;
                     const robEnt = this.rob.get(e.dest as number);
                     if (robEnt) robEnt.timings.finishExec = e.endExecCycle;
+                    
+                    // Mark RS entry as not busy immediately when execution finishes
+                    // This frees the functional unit for a new instruction to be issued next cycle
+                    e.busy = false;
+                    
+                    // Schedule write for next cycle by storing pending write info
+                    e.pendingWrite = true;
                 }
             }
         }
@@ -275,109 +304,93 @@ export class Simulator {
        ------------------------ */
     write(): void {
         for (const e of this.rs.all()) {
-            if (!e.busy) continue;
-            if (!e.execStarted) continue;
-            if (e.remaining !== 0) continue;
-            if (e.wrote) continue;
+            // Check entries that have pending write
+            if (e.pendingWrite && !e.wrote) {
+                // An instruction cannot write in the same cycle execution finishes
+                // endExecCycle is set to this.cycle + 1 when execution finishes, so if endExecCycle > this.cycle,
+                // the instruction just finished this cycle and must wait until next cycle to write
+                if (e.endExecCycle !== null && e.endExecCycle > this.cycle) {
+                    continue;
+                }
 
-            const instr = e.instr!;
-            const robIdx = e.dest as number;
+                const instr = e.instr!;
+                const robIdx = e.dest as number;
 
-            let result: number | null = null;
+                let result: number | null = null;
 
-            switch (e.type) {
-                case "LOAD": {
-                    const addr = e.address ?? 0;
-                    result = this.mem.read(addr);
-                    this.rob.markAddr(robIdx, addr);
-                    break;
+                switch (e.type) {
+                    case "LOAD": {
+                        const addr = e.address ?? 0;
+                        result = this.mem.read(addr);
+                        this.rob.markAddr(robIdx, addr);
+                        break;
+                    }
+                    case "STORE": {
+                        result = e.Vj ?? 0;
+                        this.rob.markAddr(robIdx, e.address ?? 0);
+                        break;
+                    }
+                    case "BEQ": {
+                        const vj = (e.Vj ?? 0) & 0xffff;
+                        const vk = (e.Vk ?? 0) & 0xffff;
+                        result = vj === vk ? 1 : 0;
+                        break;
+                    }
+                    case "CALL": {
+                        result = ((instr.pc ?? 0) + 1) & 0xffff;
+                        break;
+                    }
+                    case "RET": {
+                        result = e.Vj ?? 0;
+                        break;
+                    }
+                    case "ADD": {
+                        result = ((e.Vj ?? 0) + (e.Vk ?? 0)) & 0xffff;
+                        break;
+                    }
+                    case "SUB": {
+                        result = ((e.Vj ?? 0) - (e.Vk ?? 0)) & 0xffff;
+                        break;
+                    }
+                    case "NAND": {
+                        result = (~((e.Vj ?? 0) & (e.Vk ?? 0))) & 0xffff;
+                        break;
+                    }
+                    case "MUL": {
+                        result = (((e.Vj ?? 0) & 0xffff) * ((e.Vk ?? 0) & 0xffff)) & 0xffff;
+                        break;
+                    }
+                    default:
+                        result = 0;
                 }
-                case "STORE": {
-                    result = e.Vj ?? 0;
-                    this.rob.markAddr(robIdx, e.address ?? 0);
-                    break;
+
+                this.rob.setValue(robIdx, result as number);
+                const robEnt = this.rob.get(robIdx);
+                if (robEnt) robEnt.timings.write = this.cycle + 1;
+
+                const s = this.instrStats.get(instr.pc);
+                if (s) {
+                    s.startExec = e.startExecCycle;
+                    s.finishExec = e.endExecCycle;
+                    s.write = this.cycle + 1;
                 }
-                case "BEQ": {
-                    const vj = (e.Vj ?? 0) & 0xffff;
-                    const vk = (e.Vk ?? 0) & 0xffff;
-                    result = vj === vk ? 1 : 0;
-                    break;
+
+                for (const other of this.rs.all()) {
+                    if (other.Qj === robIdx) {
+                        other.Vj = result;
+                        other.Qj = null;
+                    }
+                    if (other.Qk === robIdx) {
+                        other.Vk = result;
+                        other.Qk = null;
+                    }
                 }
-                case "CALL": {
-                    result = ((instr.pc ?? 0) + 1) & 0xffff;
-                    break;
-                }
-                case "RET": {
-                    result = e.Vj ?? 0;
-                    break;
-                }
-                case "ADD": {
-                    result = ((e.Vj ?? 0) + (e.Vk ?? 0)) & 0xffff;
-                    break;
-                }
-                case "SUB": {
-                    result = ((e.Vj ?? 0) - (e.Vk ?? 0)) & 0xffff;
-                    break;
-                }
-                case "NAND": {
-                    result = (~((e.Vj ?? 0) & (e.Vk ?? 0))) & 0xffff;
-                    break;
-                }
-                case "MUL": {
-                    result = (((e.Vj ?? 0) & 0xffff) * ((e.Vk ?? 0) & 0xffff)) & 0xffff;
-                    break;
-                }
-                default:
-                    result = 0;
+
+                // Mark as written - the entry will be fully reset when reused by issue()
+                e.wrote = true;
+                e.writeCycle = this.cycle + 1;
+                e.pendingWrite = false;
             }
-
-            this.rob.setValue(robIdx, result as number);
-            const robEnt = this.rob.get(robIdx);
-            if (robEnt) robEnt.timings.write = this.cycle + 1;
-
-            const s = this.instrStats.get(instr.pc);
-            if (s) {
-                s.startExec = e.startExecCycle;
-                s.finishExec = e.endExecCycle;
-                s.write = this.cycle + 1;
-            }
-
-            for (const other of this.rs.all()) {
-                if (!other.busy) continue;
-                if (other.Qj === robIdx) {
-                    other.Vj = result;
-                    other.Qj = null;
-                }
-                if (other.Qk === robIdx) {
-                    other.Vk = result;
-                    other.Qk = null;
-                }
-            }
-
-            e.wrote = true;
-            e.writeCycle = this.cycle + 1;
-
-            // Free RS entry
-            const originalType = e.type;
-            Object.assign(e, {
-                busy: false,
-                type: originalType,
-                instr: null,
-                Vj: null,
-                Vk: null,
-                Qj: null,
-                Qk: null,
-                dest: null,
-                address: null,
-                remaining: 0,
-                execStarted: false,
-                wrote: false,
-                issueCycle: null,
-                startExecCycle: null,
-                endExecCycle: null,
-                writeCycle: null,
-                commitCycle: null,
-            });
         }
     }
 
@@ -389,6 +402,13 @@ export class Simulator {
 
         const headIdx = this.rob.head;
         const headEntry = this.rob.get(headIdx);
+
+        // An instruction cannot commit in the same cycle it was written
+        // timings.write is set to this.cycle + 1 during write(), so if write > this.cycle,
+        // the instruction just wrote this cycle and must wait until next cycle to commit
+        if (headEntry.timings.write !== null && headEntry.timings.write > this.cycle) {
+            return;
+        }
 
         const commitType = headEntry.type;
         const commitValue = headEntry.value;
@@ -509,7 +529,7 @@ export class Simulator {
     private flushAllRS(): void {
         // Clear all reservation stations
         for (const e of this.rs.all()) {
-            if (e.busy) {
+            if (e.busy || e.pendingWrite) {
                 const originalType = e.type;
                 Object.assign(e, {
                     busy: false,
@@ -524,6 +544,7 @@ export class Simulator {
                     remaining: 0,
                     execStarted: false,
                     wrote: false,
+                    pendingWrite: false,
                     issueCycle: null,
                     startExecCycle: null,
                     endExecCycle: null,
@@ -540,11 +561,12 @@ export class Simulator {
         return this.nextIssueIndex >= this.program.length && this.rob.count === 0;
     }
 
+
     stepOneCycle(): void {
+        this.commit();
         this.issue();
         this.execute();
         this.write();
-        this.commit();
         this.cycle++;
     }
 

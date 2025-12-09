@@ -30,6 +30,7 @@ export class RS {
             remaining: 0,
             execStarted: false,
             wrote: false,
+            pendingWrite: false,
 
             issueCycle: null,
             startExecCycle: null,
@@ -40,7 +41,8 @@ export class RS {
     }
 
     findFreeFor(type: Opcode): RSEntry | undefined {
-        return this.entries.find((e) => !e.busy && e.type === type);
+        // Entry is free if not busy and has no pending write
+        return this.entries.find((e) => !e.busy && !e.pendingWrite && e.type === type);
     }
 
     all(): RSEntry[] {

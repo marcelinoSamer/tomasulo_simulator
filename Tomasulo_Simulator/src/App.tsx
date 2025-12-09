@@ -20,7 +20,9 @@ export default function App() {
 
   function loadProgram(text: string) {
     const program = parseAssembly(text.split("\n"));
-    const newSim = new Simulator(program);
+    // Preserve memory when loading a new program
+    const memorySnapshot = sim ? sim.mem.dumpRelevant() : {};
+    const newSim = new Simulator(program, memorySnapshot);
     setSim(newSim);
     setSnapshot(newSim.snapshot());
     setIsRunning(false);
@@ -38,6 +40,18 @@ export default function App() {
     setSnapshot(sim.snapshot());
   }
 
+  function deleteMemory(addr: number) {
+    if (!sim) return;
+    sim.mem.delete(addr);
+    setSnapshot(sim.snapshot());
+  }
+
+  function clearMemory() {
+    if (!sim) return;
+    sim.mem.clear();
+    setSnapshot(sim.snapshot());
+  }
+
   function step() {
     if (!sim || sim.isFinished()) return;
     sim.stepOneCycle();
@@ -48,7 +62,9 @@ export default function App() {
     if (!sim) return;
     stopAutoRun();
     const text = sim.program.map(i => i.raw).join("\n");
-    const newSim = new Simulator(parseAssembly(text.split("\n")));
+    // Preserve memory across reset
+    const memorySnapshot = sim.mem.dumpRelevant();
+    const newSim = new Simulator(parseAssembly(text.split("\n")), memorySnapshot);
     setSim(newSim);
     setSnapshot(newSim.snapshot());
   }
@@ -134,7 +150,7 @@ export default function App() {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <RegisterFileTable snapshot={snapshot} />
-              <MemoryTable snapshot={snapshot} />
+              <MemoryTable snapshot={snapshot} onDelete={deleteMemory} onDeleteAll={clearMemory} />
             </div>
             <InstructionTimeline snapshot={snapshot} />
           </div>
