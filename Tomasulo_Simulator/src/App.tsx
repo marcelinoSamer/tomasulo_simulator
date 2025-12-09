@@ -16,6 +16,8 @@ export default function App() {
   const [sim, setSim] = useState<Simulator | null>(null);
   const [snapshot, setSnapshot] = useState<any>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [memoryError, setMemoryError] = useState<string | null>(null);
+  const [simError, setSimError] = useState<string | null>(null);
   const intervalRef = useRef<number | null>(null);
 
   function loadProgram(text: string) {
@@ -34,10 +36,15 @@ export default function App() {
 
   function loadMemory(obj: Record<number, number>) {
     if (!sim) return;
-    Object.entries(obj).forEach(([addr, val]) => {
-      sim.mem.write(Number(addr), Number(val));
-    });
-    setSnapshot(sim.snapshot());
+    try {
+      Object.entries(obj).forEach(([addr, val]) => {
+        sim.mem.write(Number(addr), Number(val));
+      });
+      setSnapshot(sim.snapshot());
+      setMemoryError(null);
+    } catch (e: any) {
+      setMemoryError(e.message || "Memory operation failed");
+    }
   }
 
   function deleteMemory(addr: number) {
@@ -54,8 +61,14 @@ export default function App() {
 
   function step() {
     if (!sim || sim.isFinished()) return;
-    sim.stepOneCycle();
-    setSnapshot(sim.snapshot());
+    try {
+      sim.stepOneCycle();
+      setSnapshot(sim.snapshot());
+      setSimError(null);
+    } catch (e: any) {
+      setSimError(e.message || "Simulation error");
+      stopAutoRun();
+    }
   }
 
   function reset() {
@@ -67,17 +80,25 @@ export default function App() {
     const newSim = new Simulator(parseAssembly(text.split("\n")), memorySnapshot);
     setSim(newSim);
     setSnapshot(newSim.snapshot());
+    setSimError(null);
+    setMemoryError(null);
   }
 
   function runToEnd() {
     if (!sim) return;
-    // Run up to 10000 cycles to prevent infinite loops
-    let maxCycles = 10000;
-    while (!sim.isFinished() && maxCycles > 0) {
-      sim.stepOneCycle();
-      maxCycles--;
+    try {
+      // Run up to 10000 cycles to prevent infinite loops
+      let maxCycles = 10000;
+      while (!sim.isFinished() && maxCycles > 0) {
+        sim.stepOneCycle();
+        maxCycles--;
+      }
+      setSnapshot(sim.snapshot());
+      setSimError(null);
+    } catch (e: any) {
+      setSimError(e.message || "Simulation error");
+      setSnapshot(sim.snapshot());
     }
-    setSnapshot(sim.snapshot());
   }
 
   const startAutoRun = useCallback(() => {
@@ -127,8 +148,18 @@ export default function App() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <InstructionEditor onLoad={loadProgram} />
-          <MemoryEditor onAdd={loadMemory} />
+          <MemoryEditor 
+            onAdd={loadMemory} 
+            error={memoryError} 
+            clearError={() => setMemoryError(null)} 
+          />
         </div>
+
+        {simError && (
+          <div className="mb-4 p-3 bg-red-900/50 border border-red-500 rounded-lg">
+            <p className="text-red-400 text-sm font-medium">⚠ Simulation Error: {simError}</p>
+          </div>
+        )}
 
         <CycleControls 
           onStep={step} 
