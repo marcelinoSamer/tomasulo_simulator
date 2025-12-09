@@ -1,5 +1,3 @@
-import { useState, useEffect, useRef } from "react";
-
 interface CycleControlsProps {
     onStep: () => void;
     onReset: () => void;
