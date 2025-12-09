@@ -239,17 +239,10 @@ export class Simulator {
         this.nextIssueIndex++;
     }
 
-    /* ------------------------
-       EXECUTE stage
-       ------------------------ */
     execute(): void {
         for (const e of this.rs.all()) {
             if (!e.busy) continue;
             if (e.execStarted && e.remaining <= 0) continue;
-
-            // An instruction cannot start execution in the same cycle it was issued
-            // issueCycle is set to this.cycle during issue(), so if issueCycle >= this.cycle,
-            // the instruction was just issued this cycle and must wait until next cycle
             if (!e.execStarted && e.issueCycle !== null && e.issueCycle >= this.cycle) {
                 continue;
             }
@@ -354,7 +347,6 @@ export class Simulator {
                         startExecCycle: e.startExecCycle!,
                     });
 
-                    // Fully clear the RS entry - unit is now free
                     const originalType = e.type;
                     Object.assign(e, {
                         busy: false,
@@ -381,15 +373,11 @@ export class Simulator {
         }
     }
 
-    /* ------------------------
-       WRITE stage
-       ------------------------ */
+
     write(): void {
-        // Process pending writes from the pendingWrites array
         const stillPending: typeof this.pendingWrites = [];
         
         for (const pw of this.pendingWrites) {
-            // An instruction cannot write in the same cycle execution finishes
             if (pw.endExecCycle >= this.cycle) {
                 stillPending.push(pw);
                 continue;
@@ -408,7 +396,6 @@ export class Simulator {
                 s.write = this.cycle;
             }
 
-            // CDB broadcast - update waiting RS entries
             for (const other of this.rs.all()) {
                 if (other.Qj === robIdx) {
                     other.Vj = result;
@@ -424,18 +411,11 @@ export class Simulator {
         this.pendingWrites = stillPending;
     }
 
-    /* ------------------------
-       COMMIT stage (with MISPREDICTION RECOVERY)
-       ------------------------ */
     commit(): void {
         if (!this.rob.canCommit()) return;
 
         const headIdx = this.rob.head;
         const headEntry = this.rob.get(headIdx);
-
-        // An instruction cannot commit in the same cycle it was written
-        // timings.write is set to this.cycle during write(), so if write >= this.cycle,
-        // the instruction just wrote this cycle and must wait until next cycle to commit
         if (headEntry.timings.write !== null && headEntry.timings.write >= this.cycle) {
             return;
         }
@@ -463,21 +443,14 @@ export class Simulator {
 
 
             if (predictedPC !== actualPC) {
-                // MISPREDICTION DETECTED!
                 this.mispredicts++;
 
                 // FLUSH PIPELINE:
-                // 1. Flush all ROB entries after the branch (speculative instructions)
                 this.flushROBAfterHead();
-
-                // 2. Flush all RS entries (speculative instructions)
                 this.flushAllRS();
-
-                // 3. Redirect PC to correct path
                 const targetIdx = this.pcToIndex.get(actualPC);
                 this.nextIssueIndex = targetIdx ?? this.program.length;
             }
-            // If prediction was correct, continue normally
         }
 
         else if (commitType === "STORE") {
@@ -504,7 +477,6 @@ export class Simulator {
             }
         }
 
-        // Clear regTag entries pointing to this ROB index
         for (let r = 0; r < this.regTag.length; r++) {
             if (this.regTag[r] === headIdx) {
                 this.regTag[r] = null;
@@ -517,21 +489,18 @@ export class Simulator {
 
 
     private flushROBAfterHead(): void {
-        // Clear all ROB entries after head (but not head itself)
         let idx = (this.rob.head + 1) % this.rob.size;
         const initialTail = this.rob.tail;
 
         while (idx !== initialTail) {
             const entry = this.rob.get(idx);
             if (entry.busy) {
-                // Clear register tags for flushed instructions
                 for (let r = 0; r < this.regTag.length; r++) {
                     if (this.regTag[r] === idx) {
                         this.regTag[r] = null;
                     }
                 }
 
-                // Clear the ROB entry
                 entry.busy = false;
                 entry.instr = null;
                 entry.destReg = null;
@@ -551,13 +520,11 @@ export class Simulator {
             idx = (idx + 1) % this.rob.size;
         }
 
-        // Update tail to be right after head (all speculative entries flushed)
         this.rob.tail = (this.rob.head + 1) % this.rob.size;
         this.rob.count = 1; // Only head remains
     }
 
     private flushAllRS(): void {
-        // Clear all reservation stations
         for (const e of this.rs.all()) {
             if (e.busy) {
                 const originalType = e.type;
@@ -584,13 +551,10 @@ export class Simulator {
             }
         }
         
-        // Also clear pending writes for speculative instructions
         this.pendingWrites = [];
     }
 
-    /** Returns true if all instructions have been committed */
     isFinished(): boolean {
-        // All instructions issued and ROB is empty (all committed)
         return this.nextIssueIndex >= this.program.length && this.rob.count === 0;
     }
 
