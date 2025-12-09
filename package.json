@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/MennaZaid/Tomasulo_Simulator/issues"
   },
-  "homepage": "https://github.com/MennaZaid/Tomasulo_Simulator#readme"
+  "homepage": "https://github.com/MennaZaid/Tomasulo_Simulator#readme",
+  "dependencies": {
+    "vite": "^7.2.7"
+  }
 }
