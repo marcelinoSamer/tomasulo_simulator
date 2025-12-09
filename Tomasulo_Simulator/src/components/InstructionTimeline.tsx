@@ -1,35 +1,33 @@
-
+import { Card } from "./Card";
 
 export default function InstructionTimeline({ snapshot }: any) {
     return (
-        <div>
-            <h2>Timeline</h2>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>PC</th>
-                        <th>Issue</th>
-                        <th>Start</th>
-                        <th>Finish</th>
-                        <th>Write</th>
-                        <th>Commit</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {snapshot.instrStats.map((s: any, i: number) => (
-                        <tr key={i}>
-                            <td>{s.pc}</td>
-                            <td>{s.issue ?? "-"}</td>
-                            <td>{s.startExec ?? "-"}</td>
-                            <td>{s.finishExec ?? "-"}</td>
-                            <td>{s.write ?? "-"}</td>
-                            <td>{s.commit ?? "-"}</td>
+        <Card title="Instruction Timeline">
+            <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                    <thead>
+                        <tr className="bg-gray-700">
+                            {["PC", "Instruction", "Issue", "Start", "Finish", "Write", "Commit"].map(h => (
+                                <th key={h} className="border border-gray-600 px-3 py-2 text-left font-medium text-gray-300">{h}</th>
+                            ))}
                         </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+
+                    <tbody>
+                        {snapshot.instrStats.map((s: any, i: number) => (
+                            <tr key={i} className="odd:bg-gray-800 even:bg-gray-750 hover:bg-gray-700 transition-colors">
+                                <td className="border border-gray-600 px-3 py-2 text-purple-400 font-mono">{s.pc}</td>
+                                <td className="border border-gray-600 px-3 py-2 text-gray-200 font-mono text-xs">{s.raw || "-"}</td>
+                                <td className="border border-gray-600 px-3 py-2 text-green-400 font-mono">{s.issue ?? "-"}</td>
+                                <td className="border border-gray-600 px-3 py-2 text-blue-400 font-mono">{s.startExec ?? "-"}</td>
+                                <td className="border border-gray-600 px-3 py-2 text-blue-400 font-mono">{s.finishExec ?? "-"}</td>
+                                <td className="border border-gray-600 px-3 py-2 text-yellow-400 font-mono">{s.write ?? "-"}</td>
+                                <td className="border border-gray-600 px-3 py-2 text-orange-400 font-mono">{s.commit ?? "-"}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </Card>
     );
 }

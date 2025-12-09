@@ -51,22 +51,33 @@ export default function App() {
 
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Tomasulo Simulator</h1>
+    <div className="min-h-screen bg-gray-900 py-8 px-4">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-4xl font-bold text-purple-400 text-center mb-8">
+          Tomasulo Simulator
+        </h1>
 
-      <InstructionEditor onLoad={loadProgram} />
-      <MemoryEditor onAdd={loadMemory} />
-      <CycleControls onStep={step} onReset={reset} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <InstructionEditor onLoad={loadProgram} />
+          <MemoryEditor onAdd={loadMemory} />
+        </div>
 
-      {snapshot && (
-        <>
-          <ROBTable snapshot={snapshot} />
-          <RSTable snapshot={snapshot} />
-          <RegisterFileTable snapshot={snapshot} />
-          <MemoryTable snapshot={snapshot} />
-          <InstructionTimeline snapshot={snapshot} />
-        </>
-      )}
+        <CycleControls onStep={step} onReset={reset} />
+
+        {snapshot && (
+          <div className="mt-8 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <ROBTable snapshot={snapshot} />
+              <RSTable snapshot={snapshot} />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <RegisterFileTable snapshot={snapshot} />
+              <MemoryTable snapshot={snapshot} />
+            </div>
+            <InstructionTimeline snapshot={snapshot} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

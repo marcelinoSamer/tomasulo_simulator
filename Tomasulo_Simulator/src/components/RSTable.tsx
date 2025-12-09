@@ -1,39 +1,35 @@
 import type { SimulatorSnapshot } from "../core/types";
+import { Card } from "./Card";
 
 export default function RSTable({ snapshot }: { snapshot: SimulatorSnapshot }) {
     return (
-        <div>
-            <h2>Reservation Stations</h2>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th>Busy</th>
-                        <th>Vj</th>
-                        <th>Vk</th>
-                        <th>Qj</th>
-                        <th>Qk</th>
-                        <th>Dest</th>
-                        <th>Rem</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {snapshot.rs.map((e, i) => (
-                        <tr key={i}>
-                            <td>{e.type}</td>
-                            <td>{e.busy ? 1 : 0}</td>
-                            <td>{e.Vj ?? "-"}</td>
-                            <td>{e.Vk ?? "-"}</td>
-                            <td>{e.Qj ?? "-"}</td>
-                            <td>{e.Qk ?? "-"}</td>
-                            <td>{e.dest ?? "-"}</td>
-                            <td>{e.remaining ?? "-"}</td>
+        <Card title="Reservation Stations">
+            <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                    <thead>
+                        <tr className="bg-gray-700">
+                            {["Type", "Busy", "Vj", "Vk", "Qj", "Qk", "Dest", "Rem"].map(h => (
+                                <th key={h} className="border border-gray-600 px-3 py-2 text-left font-medium text-gray-300">{h}</th>
+                            ))}
                         </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+
+                    <tbody>
+                        {snapshot.rs.map((e, i) => (
+                            <tr key={i} className="odd:bg-gray-800 even:bg-gray-750 hover:bg-gray-700 transition-colors">
+                                <td className="border border-gray-600 px-3 py-2 font-mono text-purple-400">{e.type}</td>
+                                <td className="border border-gray-600 px-3 py-2">{e.busy ? <span className="text-green-400">✔</span> : <span className="text-gray-500">—</span>}</td>
+                                <td className="border border-gray-600 px-3 py-2 text-yellow-400 font-mono">{e.Vj ?? "-"}</td>
+                                <td className="border border-gray-600 px-3 py-2 text-yellow-400 font-mono">{e.Vk ?? "-"}</td>
+                                <td className="border border-gray-600 px-3 py-2 text-blue-400 font-mono">{e.Qj ?? "-"}</td>
+                                <td className="border border-gray-600 px-3 py-2 text-blue-400 font-mono">{e.Qk ?? "-"}</td>
+                                <td className="border border-gray-600 px-3 py-2 text-blue-400 font-mono">{e.dest ?? "-"}</td>
+                                <td className="border border-gray-600 px-3 py-2 text-orange-400 font-mono">{e.remaining ?? "-"}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </Card>
     );
 }

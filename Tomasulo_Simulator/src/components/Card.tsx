@@ -1,15 +1,15 @@
 // components/Card.tsx
-import React from "react";
+import type { ReactNode } from "react";
 
 interface CardProps {
     title: string;
-    children: React.ReactNode;
+    children: ReactNode;
 }
 
 export function Card({ title, children }: CardProps) {
     return (
-        <div className="bg-dark rounded-xl shadow p-6 mb-6 border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4">{title}</h2>
+        <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
+            <h2 className="text-xl font-semibold mb-4 text-purple-300">{title}</h2>
             {children}
         </div>
     );

@@ -3,19 +3,19 @@ export default function CycleControls({ onStep, onReset }: {
     onReset: () => void;
 }) {
     return (
-        <div className="mt-6 flex gap-4">
+        <div className="flex justify-center gap-4">
             <button
                 onClick={onStep}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
+                className="px-8 py-3 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-colors font-semibold text-lg"
             >
-                Next Cycle
+                ▶ Next Cycle
             </button>
 
             <button
                 onClick={onReset}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg shadow hover:bg-red-600"
+                className="px-8 py-3 bg-red-600 text-white rounded-lg shadow-lg hover:bg-red-700 transition-colors font-semibold text-lg"
             >
-                Reset
+                ↺ Reset
             </button>
         </div>
     );
