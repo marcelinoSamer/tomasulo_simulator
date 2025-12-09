@@ -13,7 +13,8 @@ export function parseAssembly(lines: string[], startPC = 0): Instruction[] {
     const cleanedLines: { line: string; originalLine: string }[] = [];
     
     for (const rawLine of lines) {
-        let line = rawLine.split("//")[0].trim();
+        // Support # comments
+        let line = rawLine.split("#")[0].trim();
         if (!line) continue;
 
         // Check for label definition (ends with colon)
