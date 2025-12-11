@@ -288,7 +288,7 @@ export class Simulator {
                     const endExecCycle = this.cycle;
                     const robEnt = this.rob.get(e.dest as number);
                     if (robEnt) robEnt.timings.finishExec = endExecCycle;
-                    
+
                     // Compute result now
                     const instr = e.instr!;
                     const robIdx = e.dest as number;
@@ -376,7 +376,7 @@ export class Simulator {
 
     write(): void {
         const stillPending: typeof this.pendingWrites = [];
-        
+
         for (const pw of this.pendingWrites) {
             if (pw.endExecCycle >= this.cycle) {
                 stillPending.push(pw);
@@ -407,7 +407,7 @@ export class Simulator {
                 }
             }
         }
-        
+
         this.pendingWrites = stillPending;
     }
 
@@ -438,7 +438,7 @@ export class Simulator {
 
             const offset = (commitInstr as any).offset as number;
             const actualPC = commitValue === 1
-                ? commitInstr.pc + 1 + offset  // Taken
+                ? commitInstr.pc + offset  // Taken
                 : commitInstr.pc + 1;          // Not taken
 
 
@@ -550,7 +550,7 @@ export class Simulator {
                 });
             }
         }
-        
+
         this.pendingWrites = [];
     }
 

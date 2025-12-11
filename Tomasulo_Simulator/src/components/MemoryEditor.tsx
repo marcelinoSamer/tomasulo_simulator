@@ -14,7 +14,7 @@ export default function MemoryEditor({ onAdd, error, clearError }: {
     const handleAdd = () => {
         const addrNum = Number(addr);
         const valNum = Number(value);
-        
+
         // Validate address before adding
         if (isNaN(addrNum)) {
             setLocalError("Invalid address");
@@ -28,7 +28,7 @@ export default function MemoryEditor({ onAdd, error, clearError }: {
             setLocalError(`Address exceeds memory size (max: ${Memory.MAX_SIZE - 1})`);
             return;
         }
-        
+
         setLocalError(null);
         if (clearError) clearError();
         onAdd({ [addrNum]: valNum });
