@@ -297,10 +297,36 @@ export class Simulator {
                     switch (e.type) {
                         case "LOAD": {
                             const addr = e.address ?? 0;
+                            let foundConflict = false;
+                            for (let i = 0; i < this.rob.count; i++) {
+                                const checkIdx = (this.rob.head + i) % this.rob.size;
+                                const robEntry = this.rob.get(checkIdx);
+
+                                if (robEntry.busy &&
+                                    robEntry.type === "STORE" &&
+                                    robEntry.addr === addr &&
+                                    checkIdx !== robIdx) {  // Don't check against self
+                                    // Check if this STORE is before our LOAD in program order
+                                    // by comparing PC values
+                                    if (robEntry.pc !== null && instr.pc !== null &&
+                                        robEntry.pc < instr.pc) {
+                                        foundConflict = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (foundConflict) {
+
+                                e.remaining = 1;
+                                continue;
+                            }
+
                             result = this.mem.read(addr);
                             this.rob.markAddr(robIdx, addr);
                             break;
                         }
+
                         case "STORE": {
                             result = e.Vj ?? 0;
                             this.rob.markAddr(robIdx, e.address ?? 0);
