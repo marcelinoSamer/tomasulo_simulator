@@ -148,10 +148,10 @@ export default function App() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <InstructionEditor onLoad={loadProgram} />
-          <MemoryEditor 
-            onAdd={loadMemory} 
-            error={memoryError} 
-            clearError={() => setMemoryError(null)} 
+          <MemoryEditor
+            onAdd={loadMemory}
+            error={memoryError}
+            clearError={() => setMemoryError(null)}
           />
         </div>
 
@@ -161,9 +161,9 @@ export default function App() {
           </div>
         )}
 
-        <CycleControls 
-          onStep={step} 
-          onReset={reset} 
+        <CycleControls
+          onStep={step}
+          onReset={reset}
           onRunToEnd={runToEnd}
           isFinished={isFinished}
           isRunning={isRunning}
@@ -174,7 +174,7 @@ export default function App() {
         {snapshot && (
           <div className="mt-8 space-y-6">
             <PerformanceMetrics snapshot={snapshot} />
-            
+            <InstructionTimeline snapshot={snapshot} />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <ROBTable snapshot={snapshot} />
               <RSTable snapshot={snapshot} />
@@ -183,7 +183,7 @@ export default function App() {
               <RegisterFileTable snapshot={snapshot} />
               <MemoryTable snapshot={snapshot} onDelete={deleteMemory} onDeleteAll={clearMemory} />
             </div>
-            <InstructionTimeline snapshot={snapshot} />
+
           </div>
         )}
       </div>

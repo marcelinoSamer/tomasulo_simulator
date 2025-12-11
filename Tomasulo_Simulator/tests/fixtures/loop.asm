@@ -1,0 +1,7 @@
+LOAD R1, 0(R0)
+LOAD R2, 4(R0)
+Loop: SUB R1, R1, R2
+ADD R0, R0, R0
+BEQ R0, R1, Exit
+BEQ R0, R0, Loop
+Exit: ADD R0, R0, R0
